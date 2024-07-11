@@ -1,10 +1,10 @@
 FROM eclipse-temurin:22-jre-ubi9-minimal
 
-ENV JMB_VERSION 0.4.1
+ENV JMB_VERSION 0.4.2
 
 #No downloadable example config since 0.2.10
 RUN mkdir -p /jmb/config
-ADD JMusicBot-0.4.1.jar /jmb/JMusicBot.jar
+ADD JMusicBot-0.4.2.jar /jmb/JMusicBot.jar
 #ADD https://github.com/Amavect/MusicBot/releases/download/0.2.9/config.txt /jmb/config/config.txt
 
 COPY ./docker-entrypoint.sh /jmb
