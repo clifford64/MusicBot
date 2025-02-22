@@ -1,4 +1,4 @@
-FROM eclipse-temurin:22-jre-ubi9-minimal
+FROM eclipse-temurin:23-jre-noble
 
 ENV JMB_VERSION 0.4.3
 
