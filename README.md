@@ -24,3 +24,4 @@
 ### First Run
 
 ##### On first run, the container will attempt to download the config.txt file from the upstream repo if it doesn't already exist within the mapped folder. The container will then exit because the config.txt file will need to be updated with the necessary information to connect it to your discord server. Please look at the upstream repo setup instructions for more information.
+
