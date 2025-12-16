@@ -1,6 +1,6 @@
 FROM eclipse-temurin:25-jre-noble
 
-RUN apt-get update && apt-get install chromium-browser -y && apt-get install chromium-chromedriver -y
+RUN apt-get update && apt-get upgrade -y && apt-get install chromium-browser -y && apt-get install chromium-chromedriver -y
 
 ENV JMB_VERSION 0.4.3
 
