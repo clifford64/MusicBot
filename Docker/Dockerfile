@@ -1,4 +1,4 @@
-FROM eclipse-temurin:23-jre-noble
+FROM eclipse-temurin:25-jre-noble
 
 RUN apt-get update && apt-get install chromium-browser -y && apt-get install chromium-chromedriver -y
 
