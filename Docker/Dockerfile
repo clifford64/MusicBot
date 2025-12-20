@@ -1,6 +1,20 @@
 FROM eclipse-temurin:25-jre-noble
 
-RUN apt-get update && apt-get upgrade -y && apt-get install chromium-browser -y && apt-get install chromium-chromedriver -y
+ARG DEBIAN_FRONTEND=noninteractive
+
+RUN set -eux; \
+    apt-get update; \
+    # only the tools we need to get the key & install chrome
+    apt-get install -y --no-install-recommends wget gnupg ca-certificates; \
+    # fetch key & add repo
+    wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add -; \
+    echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list; \
+    # install chrome itself
+    apt-get update; \
+    apt-get install -y --no-install-recommends google-chrome-stable; \
+    # purge the helper packages and clean apt cache
+    apt-get purge -y --auto-remove wget gnupg ca-certificates; \
+    rm -rf /var/lib/apt/lists/*
 
 ENV JMB_VERSION 0.4.3
 
