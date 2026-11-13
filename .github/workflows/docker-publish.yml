@@ -85,6 +85,16 @@ jobs:
           echo "is_snapshot=$IS_SNAPSHOT" >> "$GITHUB_OUTPUT"
           echo "Extracted version: $VERSION (pom: $POM_VERSION), SHA: $SHA_SHORT, is_tag: $IS_TAG_BUILD, is_snapshot: $IS_SNAPSHOT"
 
+      - name: Check release prerelease status
+        id: prerelease
+        run: |
+          IS_PRE=false
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.event.ref_type }}" == "tag" ]]; then
+            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+            IS_PRE=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/v${TAG_VERSION}" --jq '.prerelease' 2>/dev/null || echo false)
+          fi
+          echo "is_prerelease=$IS_PRE" >> "$GITHUB_OUTPUT"
+
       - name: Generate Docker metadata
         id: meta
         uses: docker/metadata-action@v5
@@ -99,7 +109,7 @@ jobs:
           # - For master builds: latest + sha + version (if not SNAPSHOT)
           tags: |
             type=raw,value=${{ steps.metadata.outputs.version }},enable=${{ steps.metadata.outputs.is_tag_build == 'true' }}
-            type=raw,value=latest,enable=${{ steps.metadata.outputs.is_tag_build == 'false' }}
+            type=raw,value=latest,enable=${{ steps.metadata.outputs.is_tag_build == 'false' || (steps.metadata.outputs.is_tag_build == 'true' && steps.prerelease.outputs.is_prerelease == 'false') }}
             type=raw,value=${{ steps.metadata.outputs.version }},enable=${{ steps.metadata.outputs.is_tag_build == 'false' && steps.metadata.outputs.is_snapshot == 'false' }}
             type=raw,value=sha-${{ steps.metadata.outputs.sha }}
           # Labels are automatically generated from git context by metadata-action
