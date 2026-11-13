@@ -2,18 +2,23 @@ version: '3.8'
 
 services:
   jmusicbot:
-    image: ghcr.io/clifford64/musicbot:latest # or ghcr.io/clifford64/musicbot:0.6.1 for a specific version
+    image: ghcr.io/clifford64/musicbot:latest # or ghcr.io/clifford64/musicbot:0.7.2 for a specific version
     container_name: jmusicbot
-    # The container runs as non-root user 'jmusicbot' (UID 10001) for security.
-    # Ensure the mounted volume directory is readable/writable by UID 10001,
-    # or uncomment the user line below to run as your host user.
-    # user: "${UID:-10001}:${GID:-10001}"
+    # Optional: run the bot as your own user so files it creates are owned by
+    # you. The mounted directory below must then be readable/writable by that
+    # UID/GID. If omitted, the container starts as root, fixes the volume
+    # ownership, and drops to UID/GID 10001:10001 (override with
+    # MUSICBOT_UID / MUSICBOT_GID below).
+    # user: "1000:1000"
     environment:
       # JVM options. Image defaults to ZGC + AlwaysPreTouch; set JAVA_OPTS for heap or other flags:
       # - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseZGC -XX:+AlwaysPreTouch
+      # Fallback UID/GID used when no `user:` is set (default 10001:10001):
+      # - MUSICBOT_UID=10001
+      # - MUSICBOT_GID=10001
       {}
     volumes:
-      # Mount your config directory. Ensure UID 10001 has read/write access:
-      #   mkdir -p /your/path/to/musicbot && chown 10001:10001 /your/path/to/musicbot
+      # Mount your config directory. No pre-chowning is needed when `user:`
+      # is omitted: the container fixes ownership to the fallback UID first.
       - /your/path/to/musicbot:/musicbot
     restart: unless-stopped

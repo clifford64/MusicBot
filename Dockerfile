@@ -81,6 +81,11 @@ RUN groupadd --gid 10001 jmusicbot && \
     mkdir -p /app /musicbot && \
     chown -R jmusicbot:jmusicbot /app /musicbot
 
+# setpriv (util-linux) is required by the entrypoint to drop privileges at runtime
+RUN command -v setpriv >/dev/null 2>&1 || (apt-get update \
+    && apt-get install -y --no-install-recommends util-linux \
+    && rm -rf /var/lib/apt/lists/*)
+
 # Copy the built JAR from builder stage
 COPY --from=builder --chown=jmusicbot:jmusicbot /build/target/JMusicBot-*-All.jar /app/app.jar
 
@@ -89,7 +94,9 @@ COPY --chown=jmusicbot:jmusicbot --chmod=755 docker/entrypoint.sh /app/entrypoin
 
 WORKDIR /musicbot
 
-# Switch to non-root user for security
-USER jmusicbot
-
+# No USER directive on purpose: the container starts as root so the entrypoint
+# can fix ownership of the (possibly bind-mounted) /musicbot directory and then
+# drop privileges. The default fallback is jmusicbot (UID/GID 10001); override
+# it with MUSICBOT_UID/MUSICBOT_GID, or run the container as any user with -u.
+# See docker/entrypoint.sh.
 ENTRYPOINT ["/app/entrypoint.sh"]

@@ -143,6 +143,29 @@ This mounts your current directory as the musicbot volume, so the bot will use y
    - Edit `/path/to/musicbot/config.txt` on your host and add your Discord bot token.
    - Run the container again.
 
+#### Running as Your Own User (Optional)
+
+By default the container starts as root, fixes ownership of the `/musicbot`
+directory, and then drops privileges to UID/GID `10001:10001` (the `jmusicbot`
+user) before starting the bot, so you do not need to pre-`chown` your host
+directory.
+
+To run the bot as your own user instead (so files created by the bot are
+owned by you), pass `-u` with your host UID and GID and make sure the mounted
+directory is readable/writable by that user:
+
+```bash
+docker run --rm -it \
+  --name jmusicbot \
+  -u "$(id -u):$(id -g)" \
+  -v "$(pwd):/musicbot" \
+  ghcr.io/clifford64/musicbot:latest
+```
+
+The bot never runs as root. If you start the container without `-u` (or with
+`-u 0`), you can control the fallback UID/GID it drops to with the
+`MUSICBOT_UID` / `MUSICBOT_GID` environment variables (default `10001`).
+
 #### Using Docker Compose (Optional)
 
 If you prefer docker-compose, copy the example compose file and update the volume path:
