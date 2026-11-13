@@ -65,7 +65,7 @@ FROM bitnami/minideb:trixie
 # OCI image labels for better traceability and management
 LABEL org.opencontainers.image.title="JMusicBot" \
       org.opencontainers.image.description="A cross-platform Discord music bot with a clean interface" \
-      org.opencontainers.image.url="https://jmusicbot.com" \
+      org.opencontainers.image.url="https://github.com/clifford64/MusicBot" \
       org.opencontainers.image.source="https://github.com/clifford64/MusicBot" \
       org.opencontainers.image.vendor="JMusicBot" \
       org.opencontainers.image.licenses="Apache-2.0"
