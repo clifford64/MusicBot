@@ -46,18 +46,3 @@ jobs:
         run: |
           COMMIT_TIME=$(git log -1 --format=%cI)
           mvn --batch-mode verify -Pcoverage -Dproject.build.outputTimestamp=$COMMIT_TIME
-
-      - name: Upload Coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          report_type: coverage
-          files: target/site/jacoco/jacoco.xml,target/site/jacoco-it/jacoco.xml
-          token: ${{ secrets.CODECOV_TOKEN }}
-          fail_ci_if_error: false
-      
-      - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
-        uses: codecov/codecov-action@v5
-        with:
-          report_type: test_results
-          token: ${{ secrets.CODECOV_TOKEN }}

@@ -18,7 +18,7 @@ inputs:
   image-name:
     description: 'Image name (e.g., arif-banai/musicbot)'
     required: false
-    default: 'arif-banai/musicbot'
+    default: 'clifford64/musicbot'
   token:
     description: 'GitHub token for authentication'
     required: true
