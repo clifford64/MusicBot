@@ -2,11 +2,8 @@
 
 # JMusicBot
 
-A Discord music bot you run yourself. This is a fork of [jagrosh's JMusicBot](https://github.com/jagrosh/MusicBot),
-kept working and updated.
-
-> Fork of [arif-banai/MusicBot](https://github.com/arif-banai/MusicBot) (itself a fork of
-> [Jagrosh/JMusicBot](https://github.com/Jagrosh/JMusicBot)). Maintained by clifford64.
+A Discord music bot you run yourself. Fork of [arif-banai/MusicBot](https://github.com/arif-banai/MusicBot)
+(itself a fork of [jagrosh's JMusicBot](https://github.com/jagrosh/MusicBot)), maintained by clifford64.
 
 [![Release](https://img.shields.io/github/release/clifford64/MusicBot.svg)](https://github.com/clifford64/MusicBot/releases/latest)
 [![Downloads](https://img.shields.io/github/downloads/clifford64/MusicBot/total.svg)](https://github.com/clifford64/MusicBot/releases/latest)
@@ -19,34 +16,38 @@ kept working and updated.
 - Queue, history and saved playlists
 - An optional [yt-dlp library](https://arif-banai.github.io/MusicBot/features/ytdlp-library/) for songs that won't stream
 
-## Get started
+## Running with Docker (recommended)
 
-Follow the [setup guide](https://arif-banai.github.io/MusicBot/setup/), or
-[run it with Docker](https://arif-banai.github.io/MusicBot/setup/docker/).
+Image: `ghcr.io/clifford64/musicbot` — use `latest`, or pin a version tag such as `0.8.1` for production.
+Multi-arch (amd64/arm64). [Published images](https://github.com/clifford64/MusicBot/pkgs/container/musicbot).
 
-## Documentation
+Mount a folder at `/musicbot` for `config.txt`, settings and playlists. On first run the bot generates a default
+`config.txt` there — add your Discord bot token before the next start.
 
-[Commands](https://arif-banai.github.io/MusicBot/reference/commands/) ·
-[config.txt](https://arif-banai.github.io/MusicBot/reference/config/) ·
-[Troubleshooting](https://arif-banai.github.io/MusicBot/help/troubleshooting/) ·
-[Coming from JMusicBot](https://arif-banai.github.io/MusicBot/migrating/) ·
-[All docs](https://arif-banai.github.io/MusicBot/)
+```bash
+mkdir -p ~/jmusicbot && docker run --rm -it --name jmusicbot \
+  -v ~/jmusicbot:/musicbot ghcr.io/clifford64/musicbot:latest
+```
 
-## Docker
+Unlike the upstream image, the container starts as root, **fixes ownership of the mounted folder itself**, and
+drops to UID/GID `10001:10001` before starting the bot — no pre-`chown` step, and the bot never runs as root.
+Change the fallback with `MUSICBOT_UID`/`MUSICBOT_GID`, or run as yourself with `-u "$(id -u):$(id -g)"`
+(the folder just needs to be writable by that user). For a backgrounded setup, copy
+[docker-compose.example.yml](docker-compose.example.yml) — it also documents `JAVA_OPTS` heap limits.
 
-The image is `ghcr.io/clifford64/musicbot` ([published images](https://github.com/clifford64/MusicBot/pkgs/container/musicbot)).
-The container starts as root, fixes ownership of `/musicbot` itself, and drops to UID/GID `10001:10001`
-before starting the bot, so no pre-`chown` is needed — override the fallback with `MUSICBOT_UID`/`MUSICBOT_GID`,
-or run as yourself with `-u "$(id -u):$(id -g)"`. See [docker-compose.example.yml](docker-compose.example.yml).
+## Setup and documentation
+
+[Setup guide](https://arif-banai.github.io/MusicBot/setup/) · [Docker](https://arif-banai.github.io/MusicBot/setup/docker/) ·
+[Commands](https://arif-banai.github.io/MusicBot/reference/commands/) · [config.txt](https://arif-banai.github.io/MusicBot/reference/config/) ·
+[Troubleshooting](https://arif-banai.github.io/MusicBot/help/troubleshooting/) · [Migrating](https://arif-banai.github.io/MusicBot/migrating/) · [All docs](https://arif-banai.github.io/MusicBot/)
 
 ## Help and contributing
 
-Ask questions in [Discussions](https://github.com/clifford64/MusicBot/discussions) or on
-[Discord](https://discord.gg/cyyUxNmmx6), and report bugs in [Issues](https://github.com/clifford64/MusicBot/issues).
-Branch naming and the release flow are in [DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md).
+Questions in [Discussions](https://github.com/clifford64/MusicBot/discussions) or on [Discord](https://discord.gg/cyyUxNmmx6);
+bugs and feature requests in [Issues](https://github.com/clifford64/MusicBot/issues). Branch naming and the release
+flow are in [DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md).
 
-This bot is built on [JDA](https://github.com/DV8FromTheWorld/JDA),
-[lavaplayer](https://github.com/lavalink-devs/lavaplayer) and
+This bot is built on [JDA](https://github.com/DV8FromTheWorld/JDA), [lavaplayer](https://github.com/lavalink-devs/lavaplayer) and
 [youtube-source](https://github.com/lavalink-devs/youtube-source). If you like it, give them a star too.
 
 ## License

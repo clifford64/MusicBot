@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   jmusicbot:
-    image: ghcr.io/clifford64/musicbot:latest # or ghcr.io/clifford64/musicbot:0.7.2 for a specific version
+    image: ghcr.io/clifford64/musicbot:latest # or ghcr.io/clifford64/musicbot:0.8.1 for a specific version
     container_name: jmusicbot
     # Optional: run the bot as your own user so files it creates are owned by
     # you. The mounted directory below must then be readable/writable by that
