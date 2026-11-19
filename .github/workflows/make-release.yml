@@ -148,6 +148,7 @@ jobs:
             
             ---
             ### Setup
-            https://jmusicbot.com/setup  
-            https://jmusicbot.com/config  
+            ### Setup
+            https://arif-banai.github.io/MusicBot/setup/  
+            https://arif-banai.github.io/MusicBot/reference/config/  
             # Download: [JMusicBot-${{ github.event.inputs.version_number }}.jar](https://github.com/clifford64/MusicBot/releases/download/v${{ github.event.inputs.version_number }}/JMusicBot-${{ github.event.inputs.version_number }}.jar)
