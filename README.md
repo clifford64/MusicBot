@@ -34,22 +34,10 @@ Follow the [setup guide](https://arif-banai.github.io/MusicBot/setup/), or
 
 ## Docker
 
-The image is `ghcr.io/clifford64/musicbot` (tags: `latest`, and versions such as `0.8.1`).
-[Published images](https://github.com/clifford64/MusicBot/pkgs/container/musicbot).
-
-Unlike the upstream image, the container starts as root, fixes ownership of the mounted `/musicbot`
-directory itself, and then drops to UID/GID `10001:10001` before starting the bot — so you do **not**
-need to pre-`chown` the folder. You can change the fallback with the `MUSICBOT_UID` / `MUSICBOT_GID`
-environment variables, or run as your own user with `-u "$(id -u):$(id -g)"` (the folder just needs to
-be writable by that user). The bot never runs as root either way. See
-[docker-compose.example.yml](docker-compose.example.yml) for a ready-to-edit compose file.
-
-```bash
-mkdir -p ~/jmusicbot && \
-docker run --rm -it --name jmusicbot \
-  -v ~/jmusicbot:/musicbot \
-  ghcr.io/clifford64/musicbot:latest
-```
+The image is `ghcr.io/clifford64/musicbot` ([published images](https://github.com/clifford64/MusicBot/pkgs/container/musicbot)).
+The container starts as root, fixes ownership of `/musicbot` itself, and drops to UID/GID `10001:10001`
+before starting the bot, so no pre-`chown` is needed — override the fallback with `MUSICBOT_UID`/`MUSICBOT_GID`,
+or run as yourself with `-u "$(id -u):$(id -g)"`. See [docker-compose.example.yml](docker-compose.example.yml).
 
 ## Help and contributing
 
