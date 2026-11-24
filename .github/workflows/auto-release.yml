@@ -3,7 +3,9 @@ name: Auto-tag & Release
 # Merge-driven release (the default path): when a version bump lands on
 # master (pom.xml), this workflow:
 #   1. creates + pushes the matching tag v<version> if it is missing
-#   2. builds the JAR and creates the (published) GitHub release with it
+#   2. creates the (published) GitHub release with the JAR
+#      (reused from the "Build and Test" run; only built here as a fallback,
+#      e.g. for a manual re-run whose artifact has expired)
 # So merging a PR that bumps the pom version is the ONLY manual step — the
 # tag and the release follow automatically. The Docker image is already
 # published by "Publish Docker Image" (master build: latest + version + sha).
@@ -37,6 +39,7 @@ concurrency:
 
 permissions:
   contents: write  # Required to push tags and create releases
+  actions: read    # Download the JAR built by Build and Test
 
 jobs:
   release:
@@ -86,16 +89,41 @@ jobs:
             echo "release_exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Set up Java Environment
+      - name: Download JAR built by Build and Test
+        id: fetchjar
         if: steps.tagcheck.outputs.release_exists == 'false'
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: jar
+          path: release-jar
+          # The run that built the JAR. Empty for workflow_dispatch (falls
+          # back to the current run, which has no artifact -> build below)
+          run-id: ${{ github.event.workflow_run.id }}
+          if-no-files-found: error
+
+      - name: Prepare release JAR
+        id: prepjar
+        if: steps.tagcheck.outputs.release_exists == 'false'
+        run: |
+          if ls release-jar/*-All.jar >/dev/null 2>&1; then
+            mv release-jar/*-All.jar "JMusicBot-${{ steps.ver.outputs.version }}.jar"
+            echo "reusing JAR built by Build and Test"
+          else
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+            echo "no Build and Test JAR available - building"
+          fi
+
+      - name: Set up Java Environment
+        if: steps.prepjar.outputs.need_build == 'true'
         uses: actions/setup-java@v5
         with:
           java-version: '25'
           distribution: 'temurin'
           cache: maven
 
-      - name: Build JAR
-        if: steps.tagcheck.outputs.release_exists == 'false'
+      - name: Build JAR (fallback)
+        if: steps.prepjar.outputs.need_build == 'true'
         run: |
           # Tests already ran in Build and Test (this workflow is gated on it)
           COMMIT_TIME=$(git log -1 --format=%cI)

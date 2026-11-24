@@ -196,7 +196,8 @@ the only manual step — the tag, the release, and the Docker image
 
 3. **`Auto-tag & Release` runs automatically** after Build and Test passes
    - Creates and pushes the `v0.6.3` tag (skipped if it already exists)
-   - Builds the JAR and creates the GitHub release `v0.6.3`
+   - Reuses the JAR built by Build and Test (falls back to building it
+     itself, e.g. on a manual re-run) and creates the GitHub release `v0.6.3`
    - Docker image: `ghcr.io/clifford64/musicbot:0.6.3` + `:latest`
 
 Manual paths:
