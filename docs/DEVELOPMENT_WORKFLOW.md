@@ -179,27 +179,32 @@ The `build-and-test.yml` workflow runs on:
 
 ### Standard Release (from master)
 
+**Default path: merge a PR that bumps the version.** `auto-release.yml`
+("Auto-tag & Release") watches master: after `Build and Test` passes for a push
+whose `pom.xml` version has no tag yet, it creates + pushes `v<version>` and
+publishes a GitHub release with the built JAR. Merging the version-bump PR is
+the only manual step — the tag, the release, and the Docker image
+(`:latest`, `:<version>`, `:sha-*` from `Publish Docker Image`) all follow.
+
 1. **Ensure `master` is stable**
    - All tests passing
    - No known critical bugs
    - Documentation updated
 
-2. **Update version in `pom.xml`**
-   - Set the release version (e.g., `0.6.3`)
-   - Commit: `git commit -m "chore: bump version to 0.6.3"`
+2. **Bump the version in `pom.xml`** (e.g., `0.6.3`) in a PR and merge it
+   - Upstream syncs do this for you (upstream ships its own version bump)
 
-3. **Create release tag**
-   ```bash
-   git tag v0.6.3
-   git push origin v0.6.3
-   ```
+3. **`Auto-tag & Release` runs automatically** after Build and Test passes
+   - Creates and pushes the `v0.6.3` tag (skipped if it already exists)
+   - Reuses the JAR built by Build and Test (falls back to building it
+     itself, e.g. on a manual re-run) and creates the GitHub release `v0.6.3`
+   - Docker image: `ghcr.io/clifford64/musicbot:0.6.3` + `:latest`
 
-4. **Use "Make Release" workflow** (optional)
-   - Or manually create GitHub release
-   - Attach JAR file from workflow artifacts
-
-5. **Docker image is automatically built** from the tag
-   - Tagged as `ghcr.io/clifford64/musicbot:0.6.3`, and `:latest` unless the release is a pre-release
+Manual paths:
+- **"Make Release" workflow** — custom release notes, pre-releases, or
+  building from a non-master ref. Creates a DRAFT release that you publish.
+- **"Run workflow" on `Auto-tag & Release`** — re-runs the automatic flow for
+  the current version, e.g. after a failed JAR build.
 
 ### Release Branch (for stabilization)
 

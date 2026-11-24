@@ -3,6 +3,10 @@ name: Make Release
 # Manual workflow to create a GitHub release
 # This sets the version, builds the JAR, and creates a release with tag
 # The tag will trigger docker-publish.yml to build and push the Docker image
+#
+# The default path is auto-release.yml: merging a PR that bumps the pom
+# version tags + releases automatically after Build and Test passes.
+# Use this workflow for custom notes, pre-releases, or other refs.
 on:
   workflow_dispatch:
     inputs:

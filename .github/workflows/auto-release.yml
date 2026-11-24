@@ -1,0 +1,151 @@
+name: Auto-tag & Release
+
+# Merge-driven release (the default path): when a version bump lands on
+# master (pom.xml), this workflow:
+#   1. creates + pushes the matching tag v<version> if it is missing
+#   2. creates the (published) GitHub release with the JAR
+#      (reused from the "Build and Test" run; only built here as a fallback,
+#      e.g. for a manual re-run whose artifact has expired)
+# So merging a PR that bumps the pom version is the ONLY manual step — the
+# tag and the release follow automatically. The Docker image is already
+# published by "Publish Docker Image" (master build: latest + version + sha).
+#
+# Gated on Build and Test passing on master (like Publish Docker Image), so
+# untested code never gets a tag or a release. A tag push made with
+# GITHUB_TOKEN does not re-trigger other workflows (GitHub loop prevention),
+# so nothing runs twice.
+#
+# Skipped when the version is already tagged AND released. Use "Run
+# workflow" (workflow_dispatch) to re-run for the current version, e.g.
+# after a failed JAR build. "Make Release" remains available for manual
+# releases (custom notes, pre-releases, building from any ref).
+on:
+  # Triggered after build-and-test completes
+  # Note: the branches filter checks workflow_run.head_branch, the source
+  # branch of the triggering run, so PR-triggered builds never start this
+  # workflow; only direct pushes to master do.
+  workflow_run:
+    workflows: ["Build and Test"]
+    types:
+      - completed
+    branches:
+      - master
+  workflow_dispatch:
+
+# Prevent concurrent releases
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write  # Required to push tags and create releases
+  actions: read    # Download the JAR built by Build and Test
+
+jobs:
+  release:
+    name: Auto-tag & Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    # Only run if the triggering workflow succeeded (for workflow_run events)
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        # For workflow_run events, checkout the commit that triggered the original workflow
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.ref }}
+          fetch-depth: 0  # Full history needed for git commands
+
+      - name: Read version from pom.xml
+        id: ver
+        run: |
+          POM_VERSION=$(grep -m 1 '<version>' pom.xml | sed 's/.*<version>\([^<]*\)<\/version>.*/\1/' | tr -d ' ')
+          echo "pom version = $POM_VERSION"
+          [ -n "$POM_VERSION" ] || { echo "could not read version from pom.xml"; exit 1; }
+          echo "version=$POM_VERSION" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Tag v<version> if missing
+        id: tagcheck
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="v${{ steps.ver.outputs.version }}"
+          if git ls-remote --exit-code --tags origin "$tag" >/dev/null 2>&1; then
+            echo "$tag already exists"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "$tag"
+            git push origin "$tag"
+            echo "created and pushed $tag"
+          fi
+          if gh release view "$tag" --json id --jq '.id' >/dev/null 2>&1; then
+            echo "release $tag already exists"
+            echo "release_exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release_exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download JAR built by Build and Test
+        id: fetchjar
+        if: steps.tagcheck.outputs.release_exists == 'false'
+        continue-on-error: true
+        uses: actions/download-artifact@v7
+        with:
+          name: jar
+          path: release-jar
+          # The run that built the JAR. Empty for workflow_dispatch (falls
+          # back to the current run, which has no artifact -> build below)
+          run-id: ${{ github.event.workflow_run.id }}
+          if-no-files-found: error
+
+      - name: Prepare release JAR
+        id: prepjar
+        if: steps.tagcheck.outputs.release_exists == 'false'
+        run: |
+          if ls release-jar/*-All.jar >/dev/null 2>&1; then
+            mv release-jar/*-All.jar "JMusicBot-${{ steps.ver.outputs.version }}.jar"
+            echo "reusing JAR built by Build and Test"
+          else
+            echo "need_build=true" >> "$GITHUB_OUTPUT"
+            echo "no Build and Test JAR available - building"
+          fi
+
+      - name: Set up Java Environment
+        if: steps.prepjar.outputs.need_build == 'true'
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build JAR (fallback)
+        if: steps.prepjar.outputs.need_build == 'true'
+        run: |
+          # Tests already ran in Build and Test (this workflow is gated on it)
+          COMMIT_TIME=$(git log -1 --format=%cI)
+          mvn --batch-mode package -DskipTests -Dproject.build.outputTimestamp=$COMMIT_TIME
+          mv target/*-All.jar "JMusicBot-${{ steps.ver.outputs.version }}.jar"
+
+      - name: Create Release
+        if: steps.tagcheck.outputs.release_exists == 'false'
+        uses: ncipollo/release-action@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          tag: v${{ steps.ver.outputs.version }}
+          commit: ${{ steps.ver.outputs.sha }}
+          name: v${{ steps.ver.outputs.version }}
+          draft: false
+          prerelease: false
+          artifacts: "JMusicBot-${{ steps.ver.outputs.version }}.jar"
+          body: |
+            JMusicBot v${{ steps.ver.outputs.version }} (fork of arif-banai/MusicBot).
+
+            ---
+            ### Setup
+            https://arif-banai.github.io/MusicBot/setup/  
+            https://arif-banai.github.io/MusicBot/reference/config/  
+            # Download: [JMusicBot-${{ steps.ver.outputs.version }}.jar](https://github.com/clifford64/MusicBot/releases/download/v${{ steps.ver.outputs.version }}/JMusicBot-${{ steps.ver.outputs.version }}.jar)

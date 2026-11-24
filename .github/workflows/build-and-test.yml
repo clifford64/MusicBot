@@ -30,7 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
-      contents: read  # Only need to checkout repository
+      contents: read   # Only need to checkout repository
+      actions: write   # Upload the JAR for "Auto-tag & Release" to reuse
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -46,3 +47,10 @@ jobs:
         run: |
           COMMIT_TIME=$(git log -1 --format=%cI)
           mvn --batch-mode verify -Pcoverage -Dproject.build.outputTimestamp=$COMMIT_TIME
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: jar
+          path: target/JMusicBot-*-All.jar
+          if-no-files-found: error
