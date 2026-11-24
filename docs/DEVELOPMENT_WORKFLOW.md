@@ -131,15 +131,14 @@ The `build-and-test.yml` workflow runs on:
 
 ### Docker Build
 
-The `docker-build.yml` workflow builds and publishes Docker images on:
-- Pushes to `master` ΓåÆ tags as `:latest` and version (if not SNAPSHOT)
-- Pushes to short-lived branches ΓåÆ tags as `:<branch-name>` (e.g., `:feature-new-player-ui`)
-- Version tags (e.g., `v0.6.3`) ΓåÆ tags as `:0.6.3`
+`docker-publish.yml` publishes images to `ghcr.io/clifford64/musicbot` (gated on Build and Test passing):
+- Pushes to `master` (after Build and Test passes): `:latest`, the pom version (if not SNAPSHOT) and
+  `:sha-<short sha>`.
+- Version tags (e.g., `v0.9.0`, pushed when a release is published): `:0.9.0`, plus `:latest` unless the
+  release is a pre-release. Pre-releases never move `:latest`.
+- Every build also gets `:sha-<short sha>`.
 
-**Image tags:**
-- `master`: `ghcr.io/clifford64/musicbot:latest` (+ version tag if applicable)
-- Feature branch: `ghcr.io/clifford64/musicbot:feature-new-player-ui`
-- Version tag: `ghcr.io/clifford64/musicbot:0.6.3`
+`publish-preview-image.yml` (run by hand) publishes any branch, tag or SHA as `:preview-<ref>`.
 
 ## Best Practices
 
@@ -200,7 +199,7 @@ The `docker-build.yml` workflow builds and publishes Docker images on:
    - Attach JAR file from workflow artifacts
 
 5. **Docker image is automatically built** from the tag
-   - Tagged as `ghcr.io/clifford64/musicbot:0.6.3`
+   - Tagged as `ghcr.io/clifford64/musicbot:0.6.3`, and `:latest` unless the release is a pre-release
 
 ### Release Branch (for stabilization)
 
